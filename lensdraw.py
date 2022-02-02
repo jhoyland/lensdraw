@@ -19,7 +19,7 @@ Features:
 """
 
 # Here's  acomment
-
+# Messing with some stuff
 
 import svgwrite
 from svgwrite.extensions import Inkscape
@@ -32,7 +32,7 @@ DEFAULT_INDEX = 2.3
 def lensmaker(r0,r1,n,n0=1.0):
     lensPower = (n-n0) * (1/r0 - 1/r1) / n0
     return 1/lensPower
-
+g
 # Return the curvature of a plano convex/concave lens with the specified focal length
 def planolenscurvature(f,n):
     return f * (n-1)
