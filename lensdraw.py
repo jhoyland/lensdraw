@@ -1714,20 +1714,23 @@ if __name__ == "__main__":
     opticLayer = inkscape.layer(label="optics")
     dwg.add(opticLayer)
     
-    optics.draw(dwg,layer=opticLayer,axisLimits=(-200,120))        
+    optics.draw(dwg,layer=opticLayer,axisLimits=(-300,120))        
     
     project = tracingProject(optics)
     
-    project.setObject(-50)
+    project.setObject(50)
     project.setInputPlane(-100,relativeTo='firstElement')
     project.setOutputPlane(30,relativeTo='lastElement')
     
     angles = np.arange(-0.2,0.1,0.02)
+
+    project.solveAll()
     
     project.addTracesAngleRange(20,angles,group=1,color='green')
     project.addTracesAngleRange(-20,-1*angles,group=2,color='red')
     project.traceAll()
     project.drawTraces(dwg,inkscape=inkscape)
+    project.drawObject(dwg,inkscape=inkscape)
     
     dwg.save()
     
