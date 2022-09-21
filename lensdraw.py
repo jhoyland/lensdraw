@@ -394,6 +394,7 @@ class opticalPlane:
         
         self.clear_aperture = True
         
+        self.drawType = "plane"
         
     def __str__(self):
         
@@ -409,7 +410,7 @@ class opticalPlane:
         return self.getMatrix().dot(ray)
     
     def rayBlocked(self,rayHeight): 
-        return self.clear_aperture != (rayHeight < self.diameter)
+        return self.physical and (self.clear_aperture != (rayHeight < 0.5*self.diameter))
     
     # SVG functions use double dispatch to sparate drawing from calculations
     
@@ -430,14 +431,13 @@ class physicalObject(opticalPlane):
         
         super().__init__(name,label)
         
+        self.drawType = "object"
+        
         
     def svgPath(self,drawing):
            
         return drawing.drawObject(self.x,self.diameter)
     
-    def svgStyle(self,drawing):
-        
-        return drawing.default_plane_style
         
 
 class imagePlane(opticalPlane) :
@@ -447,6 +447,8 @@ class imagePlane(opticalPlane) :
         
         self.mag = 1
         self.source = None # Refence to the object this is an image of
+        
+        self.drawType = "object"
 
     def svgPath(self,drawing):
         
@@ -458,6 +460,7 @@ class beamBlock(opticalPlane):
     def __init__(self,name,label=None):
         super().__init__(name,label)
         self.clear_aperture = False
+        self.drawType = "beam_block"
    
 class occluder(opticalPlane):
     
@@ -465,6 +468,7 @@ class occluder(opticalPlane):
         super().__init__(name,label)
         self.clear_aperture = False
         self.diameter = 25.4
+        self.drawType = "occluder"
         
     def svgPath(self,drawing):
         
@@ -480,6 +484,7 @@ class aperture(opticalPlane):
         self.diameter = 25.4
         
         self.physical = True
+        self.drawType = "aperture"
         
     # Creates an aperture with the same position and diameter as another object
         
@@ -510,6 +515,8 @@ class imageSensor(occluder):
     def __init__(self,name,label=None):
         super().__init__(name,label)
         
+        self.drawType = "sensor"
+        
                 
     def __str__(self):
         
@@ -517,13 +524,14 @@ class imageSensor(occluder):
         return ret
             
     
-class apertureImage(imagePlane):
+class apertureImage(aperture):
         
     def __init__(self,name,label=None):
         super().__init__(name,label)
         self.physical = False
         
-            
+        self.drawType = "aperture_image"
+        
     def __str__(self):
         
         ret = "Effective aperture: {:} @{:} diameter={:}".format(self.name,self.x,self.diameter)
@@ -538,7 +546,9 @@ class thinLens(aperture):
         self.r0 = bilenscurvature(self.f,self.n)
         self.r1 = -self.r0   
         
-        self.style = deepcopy(default_lens_style)
+        self.drawType = "lens"
+        
+        
 
                 
     def __str__(self):
@@ -639,6 +649,8 @@ class raySegment:
     
     def xy(self,scale=(1,1)):
         return (float(self.x * scale[0]),float(self.vector[0,0] * scale[1]))
+    
+    
         
 
 # rayTrace: an individual trace of a ray through the optical system
@@ -680,6 +692,7 @@ class rayTrace:
                 newSegment.blocked = raySegments[-1].blocked or plane.rayBlocked(abs(newVector[0,0]))
                     
                 raySegments.append(newSegment)
+        
                 
                 if not started:
                     i = i+1
@@ -959,6 +972,7 @@ class tracingProject:
             
             self.entrancePupil = apertureImage('__entrance_pupil__')
             self.entrancePupil.optics = self.optics
+            self.entrancePupil.drawType = "entrance_pupil"
             firstElement = self.optics.elements[0]
             
             if self.apertureStop.name == firstElement.name:
@@ -988,6 +1002,7 @@ class tracingProject:
             
             self.exitPupil = apertureImage('__exit_pupil__')
             self.exitPupil.optics = self.optics
+            self.exitPupil.drawType = "exit_pupil"
             lastElement = self.optics.elements[-1]
             
             if self.apertureStop.name == lastElement.name:
@@ -1062,6 +1077,7 @@ class tracingProject:
             
             self.entranceWindow = apertureImage('__entrance_window__')
             self.entranceWindow.optics = self.optics
+            self.entranceWindow.drawType = "entrance_window"
             firstElement = self.optics.elements[0]
             
             if self.fieldStop.name == firstElement.name:
@@ -1096,6 +1112,7 @@ class tracingProject:
             
             self.exitWindow = apertureImage('__exit_window__')
             self.exitWindow.optics = self.optics
+            self.exitWindow.drawType = "exit_window"
             lastElement = self.optics.elements[-1]
             
             if self.fieldStop.name == lastElement.name:
@@ -1300,7 +1317,7 @@ class tracingProject:
 class lensrender:
     
     DEFAULT_SCALE_POSITIONING = 3  # 1 pixel = 1 mm, used for positioning of planes
-    DEFAULT_SCALE_ELEMENTS = 3  # 1 pixel = 1 mm, used for visual sizing of lenses and other elements
+    DEFAULT_SCALE_ELEMENTS = 5  # 1 pixel = 1 mm, used for visual sizing of lenses and other elements
     DEFAULT_SCALE_CURVATURE = 3 # Exaggerate or reduce visual curvature of lenses
 
     DEFAULT_DISPLAY_HEIGHT = 140
@@ -1308,13 +1325,6 @@ class lensrender:
     
     DEFAULT_ELEMENT_THICKNESS = 2
     
-    default_plane_style    = {"stroke":"#090909","width":0.5,"fill":"none","stroke_dasharray":"8,8"}
-    default_lens_style     = {"stroke":"#000000","width":0.5,"fill":"#CCCCCC","stroke_dasharray":"100,0"}
-    default_aperture_style = {"stroke":"#000000","width":1.5,"fill":"none","stroke_dasharray":"100,0"}
-    default_trace_style          = {"stroke":"#FF0000","width":0.5,"fill":"none","stroke_dasharray":"100,0"}
-    default_trace_virtual_style  = {"stroke":"#FF0000","width":0.5,"fill":"none","stroke_dasharray":"1,1"}
-    default_trace_blocked_style  = {"stroke":"#440000","width":0.5,"fill":"none","stroke_dasharray":"100,0"}
-    aperture_stop_style = {"stroke":"#009900","width":1.5,"fill":"none","stroke_dasharray":"100,0"}
  
     
     
@@ -1326,24 +1336,59 @@ class lensrender:
         self.scale_position = lensrender.DEFAULT_SCALE_POSITIONING 
         self.scale_elements = lensrender.DEFAULT_SCALE_ELEMENTS 
         self.scale_curvature = lensrender.DEFAULT_SCALE_CURVATURE 
-        self.element_thickness = lensrender.DEFAULT_DISPLAY_THICKNESS
+        self.element_thickness = lensrender.DEFAULT_ELEMENT_THICKNESS 
         self.axis_height = 0.5 * self.display_height
-        self.x_origin = 0
+        self.x_origin = -30
         
         self.svgdrawing = svgwrite.Drawing(name,size=size,profile=profile)
-        self.inkscape = Inkscape(self.dwg)
+        self.inkscape = Inkscape(self.svgdrawing)
         
-        self.axisLayer = self.inkscape.layer(label="axis")
-        self.opticLayer = self.inkscape.layer(label="optics")
-        self.stopsLayer = self.inkscape.layer(label="stops")
-        self.pupilsLayer = self.inkscape.layer(label="pupils")
-        self.windowsLayer = self.inkscape.layer(label="windows")
+        # self.axisLayer = self.inkscape.layer(label="axis")
+        # self.opticLayer = self.inkscape.layer(label="optics")
+        # self.stopsLayer = self.inkscape.layer(label="stops")
+        # self.pupilsLayer = self.inkscape.layer(label="pupils")
+        # self.windowsLayer = self.inkscape.layer(label="windows")
         
-        
-        
-        self.svgdrawing.add(self.opticLayer)
+        # self.svgdrawing.add(self.opticLayer)
         
         self.rayTraceLayers = {}
+        
+        self.layers = {
+        "axis":self.inkscape.layer(label="axis"),
+        "optics":self.inkscape.layer(label="optics"),
+        "stops":self.inkscape.layer(label="stops"),
+        "pupils":self.inkscape.layer(label="pupils"),
+        "windows":self.inkscape.layer(label="windows")  
+        }
+        
+        for layer in self.layers:
+            self.svgdrawing.add(self.layers[layer])
+            
+        self.group_colors = ["#FF0000","#FF0000","#00FF00","#0000FF","#00FFFF","#FF00FF","FFFF00"]
+        
+        
+        
+        self.styles = {    
+        "missing_style":{"stroke":"#FF0000","stroke_width":1,"fill":"none","stroke_dasharray":"3,3"},
+        "plane":{"stroke":"#090909","stroke_width":0.5,"fill":"none","stroke_dasharray":"8,8"},
+        "lens":{"stroke":"#000000","stroke_width":0.5,"fill":"#CCCCCC","stroke_dasharray":"100,0"},
+        "aperture":{"stroke":"#000000","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "trace":{"stroke":"#FF0000","stroke_width":0.5,"fill":"none","stroke_dasharray":"100,0"},
+        "virtual_trace":{"stroke":"#FF0000","stroke_width":0.5,"fill":"none","stroke_dasharray":"1,1"},
+        "blocked_trace":{"stroke":"#440000","stroke_width":0.5,"fill":"none","stroke_dasharray":"100,0"},
+        "aperture_stop":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "field_stop":{"stroke":"#990000","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "entrance_pupil":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "exit_pupil":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "entrance_window":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "exit_window":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "axis_style":{"stroke":"#040404","stroke_width":2.0,"fill":"none","stroke_dasharray":"10,4"}
+    
+        }
+        
+    def save_drawing(self):
+        
+        self.svgdrawing.save()
         
         
     ## Builds the SVG path text for a lens of given radii and diameter
@@ -1395,7 +1440,7 @@ class lensrender:
                
         path.moveRel(-0.5 * self.element_thickness, 0.5 * disp_diameter)
         path.horizontalRel(self.element_thickness)
-        path.moveRel(0,-self.disp_diameter)
+        path.moveRel(0,-disp_diameter)
         path.horizontalRel(-self.element_thickness)
         
         path.moveRel(0.5 * self.element_thickness, 0)
@@ -1433,10 +1478,10 @@ class lensrender:
         
         # Draw left face
         
-        if lsag == 0:
+        if lsag == 0: # Plane face
             path.verticalRel(DLens)
-        else:
-            path.circularArcRel(x=0,y=DLens,r=abs(R0),large_arc = False,clockwise = R0 >= 0)
+        else:         # Curved face
+            path.circularArcRel(0,DLens,abs(R0),long_arc = False,clockwise = R0 < 0)
             
         # Draw top edge 
              
@@ -1444,12 +1489,13 @@ class lensrender:
         
         # Draw right face
         
-        if lsag == 0:
+        if rsag == 0:
             path.verticalRel(-DLens)
         else:
-            path.circularArcRel(x=0,y=-DLens,r=abs(R1),large_arc = False,clockwise = R1 < 0)
+            path.circularArcRel(0,-DLens,abs(R1),long_arc = False,clockwise = R1 > 0)
             
         # Close the path    
+
         
         path.close()
         
@@ -1459,7 +1505,7 @@ class lensrender:
     
     def get_element_position(self,el):
 
-        return (el.x * self.scale_position - self.x_origin, self.axis_height) 
+        return self.scale_point((el.x,0))
     
     def scale_point(self,p):
         
@@ -1467,41 +1513,47 @@ class lensrender:
 
     def drawOpticElement(self,el,layer,style = None):
         
-        path,def_style = el.svgPath(self)
+        path = el.svgPath(self)
         path_string = path.get_path_string()
 
         if style is None:
             
-            style = def_style
+            
+            if el.drawType in self.styles:
+                style = self.styles[el.drawType]
+            else:
+                style = self.styles["missing_style"]
+                
+                
+            print(style)
 
-        path_element = self.dwg.path(path_string,**style)
-        layer.add(path_element)
+        path_element = self.svgdrawing.path(path_string,**style)
+        self.layers[layer].add(path_element)
+        
+    def drawOpticElementAsAperture(self,el,layer,style=None, name=None):
+        
+        if name is None:
+            name = el.name
+            
+        ap = aperture.from_element(el, name)
+        
+        self.drawOpticElement(ap,layer,style)
+        
+    
         
         
     def drawOpticalSystem(self,optics):
         
         for el in optics.elements:
             
-            self.drawOpticElement(el, self.opticLayer)
+            self.drawOpticElement(el, "optics")
             
-    def drawApertureStop(self,project):
+    def drawOpticalAxis(self):
         
-        drawAS = aperture.from_element(project.apertureStop,"AS",label="AS")
-        
-        self.drawOpticElement(drawAS, self.stopsLayer, style = lensrender.aperture_stop_style)
+        axis = self.svgdrawing.line( start = (0,self.axis_height),end = (self.display_width,self.axis_height),** self.styles["axis_style"])
+        self.layers["axis"].add(axis)
             
-    def drawFieldStop(self,project):
-        
-        drawFS = aperture.from_element(project.fieldStop,"FS",label="FS")
-        
-        self.drawOpticElement(drawFS, self.stopsLayer, style = lensrender.field_stop_style)
-        
-    def drawEntrancePupil(self,project):
-        
-        drawES = a
-        
-     
-        
+
         
  
 
@@ -1523,12 +1575,13 @@ class lensrender:
                 x1, y1 = self.scale_point(previous.xy())
                 x2, y2 = self.scale_point(element.xy())
                 
-                rstyle =  (ray.style,ray.style_blocked)[int(previous.blocked)]
+                rstyle =  deepcopy((self.styles["trace"],self.styles["blocked_trace"])[int(previous.blocked)])    
+                rstyle["stroke"] = self.group_colors[ray.group] 
                 
                 line = self.svgdrawing.line( start = (x1,y1),end = (x2,y2),**rstyle)
                 self.rayTraceLayers[ray.group].add(line)
             
-                previous = element    
+                previous = element
             
 
             
@@ -1542,7 +1595,7 @@ class svg_path:
     line_absolute = "L {x:4},{y:4} "
     
     horiz_relative = "h {x:4} "
-    verti_relative = "v {x:4} "
+    verti_relative = "v {y:4} "
     
     arc_relative = "a {r1:4},{r2:4} {xaxis:4} {large_arc} {sweep} {x:4},{y:4} "
     circ_arc_relative = "a {r:4},{r:4} 0 {large_arc} {sweep} {x:4},{y:4} "
@@ -1645,9 +1698,9 @@ if __name__ == "__main__":
     lens1.f = 60
     lens1.makePlano()
     
-    lens2.r0 = 30
-    lens2.r1 = -35
-    lens2.diameter = 10
+    lens2.r0 = 50
+    lens2.r1 = -100
+    lens2.diameter = 25
     lens2.fFromLensmaker()
     
     lens3.r0 = 300
@@ -1684,7 +1737,7 @@ if __name__ == "__main__":
     
     project = tracingProject(optics)
     
-    project.setObject(-2)
+    project.setObject(-100)
     project.setInputPlane(-200,relativeTo='firstElement')
     project.setOutputPlane(30,relativeTo='lastElement')
     
@@ -1701,6 +1754,25 @@ if __name__ == "__main__":
     project.report()
     
     #dwg.save()
+    
+    
+    drawing = lensrender()
+    
+    drawing.drawOpticalSystem(optics)
+    
+    for ray in project.traces:
+        
+        drawing.drawRayTrace(ray)
+        
+    drawing.drawOpticalAxis()
+    
+    drawing.drawOpticElement(project.entrancePupil, "pupils")
+    drawing.drawOpticElement(project.exitPupil, "pupils")
+    drawing.drawOpticElement(project.entranceWindow, "windows")
+    drawing.drawOpticElement(project.exitWindow, "windows")
+    
+    drawing.save_drawing()
+    
     
     
     """
