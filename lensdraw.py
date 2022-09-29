@@ -284,7 +284,7 @@ class opticalSystem:
             lens.x = x
             self.addElement(lens)
             
-    def addApperture(self,name,x,d,afterElement=None):
+    def addAperture(self,name,x,d,afterElement=None):
         
         app = aperture(name)
         app.diameter =d
@@ -307,7 +307,13 @@ class opticalSystem:
             return el[0]
         else:
             return None
-        
+
+
+    def getLenses(self):
+
+        return [e for e in self.elements if e.drawType == "lens"]    
+
+
     
     
         
@@ -640,6 +646,7 @@ class raySegment:
         self.vector = vector
         self.blocked = False
         self.excluded = False
+        self.source = None
         
     def height(self):
         return self.vector[0,0]
@@ -696,6 +703,7 @@ class rayTrace:
                 
                 newVector = plane.getMatrix() * newVector
                 newSegment = raySegment(plane.x,newVector)
+                newSegment.source = plane
                 
                     
                 newSegment.blocked = raySegments[-1].blocked or plane.rayBlocked(abs(newVector[0,0]))
@@ -779,17 +787,25 @@ class tracingProject:
         self.image = None
         self.intermediateImages = []
         self.traces = []
-        self.entrancePupil = None
-        self.exitPupil = None
-        self.apertureStop = None
-        self.fieldStop = None
-        self.sysMatrixToAS = None
-        self.exitWindow = None
-        self.entranceWindow = None
+        # self.logicalApertures["entrance_pupil"] = None
+        # self.logicalApertures["exit_pupil"] = None
+        # self.logicalApertures["aperture_stop"] = None
+        # self.logicalApertures["field_stop"] = None
+        # self.logicalApertures["exit_window"] = None
+        # self.logicalApertures["entrance_window"] = None
+
+        self.logicalApertures = {
+            "entrance_pupil":None,
+            "exit_pupil":None,
+            "aperture_stop":None,
+            "field_stop":None,
+            "entrance_window":None,
+            "exit_window":None
+        }
         
         self.valid = False
         
-        self.angularApperture = 0
+        self.angularAperture = 0
         self.FOV = math.pi
         
         self.inputLocation = 0
@@ -949,16 +965,18 @@ class tracingProject:
     Again if element A is zero there is an intermediate image at the plane and so it is not the aperture stop.
     """
     
+    def clearLogicalApertures():
+
+        self.logicalApertures = {x:None for x in self.logicalApertures}
     
-    
-    def findAppertureStop(self):
+    def findApertureStop(self):
         
-        self.angularApperture = np.inf
+        self.angularAperture = np.inf
         
         finiteObject = abs(self.object.x) != np.inf
 
 
-        print("Finding apperture  stop")
+        print("Finding Aperture  stop")
         
             
         
@@ -979,35 +997,35 @@ class tracingProject:
                 
                     r0 = abs(element.diameter / (2*mxel))
                 
-                    if r0 < self.angularApperture:
-                        self.apertureStop = element
-                        self.angularApperture = r0
+                    if r0 < self.angularAperture:
+                        self.logicalApertures["aperture_stop"] = element
+                        self.angularAperture = r0
 
             
     def findEntrancePupil(self):
         
-        if self.apertureStop is not None:
+        if self.logicalApertures["aperture_stop"] is not None:
             
-            self.entrancePupil = apertureImage('__entrance_pupil__')
-            self.entrancePupil.optics = self.optics
-            self.entrancePupil.drawType = "entrance_pupil"
+            self.logicalApertures["entrance_pupil"] = apertureImage('__entrance_pupil__')
+            self.logicalApertures["entrance_pupil"].optics = self.optics
+            self.logicalApertures["entrance_pupil"].drawType = "entrance_pupil"
             firstElement = self.optics.elements[0]
             
-            if self.apertureStop.name == firstElement.name:
+            if self.logicalApertures["aperture_stop"].name == firstElement.name:
                           
-                self.entrancePupil.x = firstElement.x
-                self.entrancePupil.diameter =  firstElement.diameter
+                self.logicalApertures["entrance_pupil"].x = firstElement.x
+                self.logicalApertures["entrance_pupil"].diameter =  firstElement.diameter
                 
             else:
             
-                syMx = self.optics.getSystemMatrix(fromElement = self.apertureStop.name ,backward = True,inclusive = (False,True))
+                syMx = self.optics.getSystemMatrix(fromElement = self.logicalApertures["aperture_stop"].name ,backward = True,inclusive = (False,True))
                 
                 si,mag = getImageDistance(syMx)
                 
       #          print("Entrance pupil image distance {:}".format(si))
                             
-                self.entrancePupil.x = firstElement.x - si
-                self.entrancePupil.diameter =  abs(self.apertureStop.diameter * (syMx[0,0] + si * syMx[1,0]))
+                self.logicalApertures["entrance_pupil"].x = firstElement.x - si
+                self.logicalApertures["entrance_pupil"].diameter =  abs(self.logicalApertures["aperture_stop"].diameter * (syMx[0,0] + si * syMx[1,0]))
             
             return True
         
@@ -1016,26 +1034,26 @@ class tracingProject:
     
     def findExitPupil(self):
                         
-        if self.apertureStop  is not None:
+        if self.logicalApertures["aperture_stop"]  is not None:
             
-            self.exitPupil = apertureImage('__exit_pupil__')
-            self.exitPupil.optics = self.optics
-            self.exitPupil.drawType = "exit_pupil"
+            self.logicalApertures["exit_pupil"] = apertureImage('__exit_pupil__')
+            self.logicalApertures["exit_pupil"].optics = self.optics
+            self.logicalApertures["exit_pupil"].drawType = "exit_pupil"
             lastElement = self.optics.elements[-1]
             
-            if self.apertureStop.name == lastElement.name:
+            if self.logicalApertures["aperture_stop"].name == lastElement.name:
                 
-                self.exitPupil.x = lastElement.x          
-                self.exitPupil.diameter = lastElement.diameter
+                self.logicalApertures["exit_pupil"].x = lastElement.x          
+                self.logicalApertures["exit_pupil"].diameter = lastElement.diameter
             
             else:
             
-                syMx = self.optics.getSystemMatrix(fromElement = self.apertureStop.name,inclusive = (False,True))
+                syMx = self.optics.getSystemMatrix(fromElement = self.logicalApertures["aperture_stop"].name,inclusive = (False,True))
                 
                 si,mag = getImageDistance(syMx)
                 
-                self.exitPupil.x = lastElement.x + si            
-                self.exitPupil.diameter = abs(self.apertureStop.diameter * (syMx[0,0] + si * syMx[1,0]))
+                self.logicalApertures["exit_pupil"].x = lastElement.x + si            
+                self.logicalApertures["exit_pupil"].diameter = abs(self.logicalApertures["aperture_stop"].diameter * (syMx[0,0] + si * syMx[1,0]))
             
             return True
         
@@ -1051,6 +1069,12 @@ class tracingProject:
         #initialTransferMatrix = (identityMatrix(),translationMatrix(abs(self.object.x)))[finiteObject]
         
         print("Finding field stop")
+
+        if len(self.optics.elements) <= 1:
+
+            self.logicalApertures["field_stop"] = None
+
+            return
         
         for element in self.optics.elements:
             
@@ -1060,16 +1084,16 @@ class tracingProject:
 
 
                 
-                if not(element.name == self.apertureStop.name):
+                if not(element.name == self.logicalApertures["aperture_stop"].name):
                 
-                    direction = element.x < self.apertureStop.x
+                    direction = element.x < self.logicalApertures["aperture_stop"].x
                     
    #                 if direction:
     #                    print("Before AS")
      #               else:
       #                  print("After AS")
                     
-                    syMx = self.optics.getSystemMatrix(fromElement = self.apertureStop.name, toElement = element.name,backward = direction, inclusive = (False,False))
+                    syMx = self.optics.getSystemMatrix(fromElement = self.logicalApertures["aperture_stop"].name, toElement = element.name,backward = direction, inclusive = (False,False))
                        
    #                 print("System matrix: {:}".format(syMx))
                     
@@ -1086,40 +1110,40 @@ class tracingProject:
                         if r0 < aF:
                             
      #                       print("New Field Stop")
-                            self.fieldStop = element
+                            self.logicalApertures["field_stop"] = element
                             aF = r0
            
             
                 
     def findEntranceWindow(self):
         
-        if self.fieldStop is not None:
+        if self.logicalApertures["field_stop"] is not None:
             
-            self.entranceWindow = apertureImage('__entrance_window__')
-            self.entranceWindow.optics = self.optics
-            self.entranceWindow.drawType = "entrance_window"
+            self.logicalApertures["entrance_window"] = apertureImage('__entrance_window__')
+            self.logicalApertures["entrance_window"].optics = self.optics
+            self.logicalApertures["entrance_window"].drawType = "entrance_window"
             firstElement = self.optics.elements[0]
             
-            if self.fieldStop.name == firstElement.name:
+            if self.logicalApertures["field_stop"].name == firstElement.name:
                           
-                self.entranceWindow.x = firstElement.x
-                self.entranceWindow.diameter =  firstElement.diameter
+                self.logicalApertures["entrance_window"].x = firstElement.x
+                self.logicalApertures["entrance_window"].diameter =  firstElement.diameter
                 
             else:
             
-                syMx = self.optics.getSystemMatrix(fromElement = self.fieldStop.name ,backward = True,inclusive = (False,True))
+                syMx = self.optics.getSystemMatrix(fromElement = self.logicalApertures["field_stop"].name ,backward = True,inclusive = (False,True))
                 
                 si,mag = getImageDistance(syMx)
                 
         #        print("Entrance window image distance {:}".format(si))
                             
-                self.entranceWindow.x = firstElement.x - si
+                self.logicalApertures["entrance_window"].x = firstElement.x - si
                 
                 if abs(si) == np.inf:
                     # angular diameter for infinite entrance window distance
-                    self.entranceWindow.diameter =  abs(self.fieldStop.diameter * syMx[1,0])  
+                    self.logicalApertures["entrance_window"].diameter =  abs(self.logicalApertures["field_stop"].diameter * syMx[1,0])  
                 else:
-                    self.entranceWindow.diameter =  abs(self.fieldStop.diameter * (syMx[0,0] + si * syMx[1,0]))
+                    self.logicalApertures["entrance_window"].diameter =  abs(self.logicalApertures["field_stop"].diameter * (syMx[0,0] + si * syMx[1,0]))
             
             return True
 
@@ -1130,33 +1154,33 @@ class tracingProject:
                     
     def findExitWindow(self):
         
-        if self.fieldStop is not None:
+        if self.logicalApertures["field_stop"] is not None:
             
-            self.exitWindow = apertureImage('__exit_window__')
-            self.exitWindow.optics = self.optics
-            self.exitWindow.drawType = "exit_window"
+            self.logicalApertures["exit_window"] = apertureImage('__exit_window__')
+            self.logicalApertures["exit_window"].optics = self.optics
+            self.logicalApertures["exit_window"].drawType = "exit_window"
             lastElement = self.optics.elements[-1]
             
-            if self.fieldStop.name == lastElement.name:
+            if self.logicalApertures["field_stop"].name == lastElement.name:
                           
-                self.exitWindow.x = lastElement.x
-                self.exitWindow.diameter =  lastElement.diameter
+                self.logicalApertures["exit_window"].x = lastElement.x
+                self.logicalApertures["exit_window"].diameter =  lastElement.diameter
                 
             else:
             
-                syMx = self.optics.getSystemMatrix(fromElement = self.fieldStop.name,inclusive = (False,True))
+                syMx = self.optics.getSystemMatrix(fromElement = self.logicalApertures["field_stop"].name,inclusive = (False,True))
                 
                 si,mag = getImageDistance(syMx)
                 
         #        print("Entrance window image distance {:}".format(si))
                             
-                self.exitWindow.x = si + lastElement.x
+                self.logicalApertures["exit_window"].x = si + lastElement.x
                 
                 if abs(si) == np.inf:
                     # angular diameter for infinite exit window distance
-                    self.exitWindow.diameter =  abs(self.fieldStop.diameter * syMx[1,0])  
+                    self.logicalApertures["exit_window"].diameter =  abs(self.logicalApertures["field_stop"].diameter * syMx[1,0])  
                 else:
-                    self.exitWindow.diameter =  abs(self.fieldStop.diameter * (syMx[0,0] + si * syMx[1,0]))
+                    self.logicalApertures["exit_window"].diameter =  abs(self.logicalApertures["field_stop"].diameter * (syMx[0,0] + si * syMx[1,0]))
             
             return True
         
@@ -1166,13 +1190,19 @@ class tracingProject:
 
     def getFOV(self):
 
-        print(self.entranceWindow)
-        
-        dEW = 0.5* self.entranceWindow.diameter
-        #dEP = 0.5* self.entrancePupil.diameter
+        if self.logicalApertures["field_stop"] is None:
 
-        xEW = self.entranceWindow.x
-        xEP = self.entrancePupil.x
+            self.FOV = math.pi
+
+            return
+
+        print(self.logicalApertures["entrance_window"])
+        
+        dEW = 0.5* self.logicalApertures["entrance_window"].diameter
+        #dEP = 0.5* self.logicalApertures["entrance_pupil"].diameter
+
+        xEW = self.logicalApertures["entrance_window"].x
+        xEP = self.logicalApertures["entrance_pupil"].x
         
         if abs(xEW) == np.inf:
             
@@ -1188,7 +1218,7 @@ class tracingProject:
     def solveAll(self):
         
         self.calculateImage()
-        self.findAppertureStop()
+        self.findApertureStop()
         self.findExitPupil()
         self.findEntrancePupil()
         self.findFieldStop()
@@ -1246,9 +1276,9 @@ class tracingProject:
     def addMarginalRay(self,group=0,negative=False):
         
                 
-        if self.apertureStop is not None:
+        if self.logicalApertures["aperture_stop"] is not None:
             
-            aa = 0.99*self.angularApperture
+            aa = 0.99*self.angularAperture
             
             if negative:
                 
@@ -1264,7 +1294,7 @@ class tracingProject:
         
     def addFullFieldChiefRay(self,group=0,negative=True,rays=1):
         
-        if self.entrancePupil is not None:
+        if self.logicalApertures["entrance_pupil"] is not None:
             
             aa = self.FOV * 0.5 * 0.99
                 
@@ -1274,13 +1304,13 @@ class tracingProject:
             #infinite objectson the front element and calculates back. May need to 
             # rethink this
                 
-            if self.object.x == -np.inf and self.entrancePupil.x > self.optics.elements[0].x:
+            if self.object.x == -np.inf and self.logicalApertures["entrance_pupil"].x > self.optics.elements[0].x:
                 
-                h = ( self.entrancePupil.x - self.optics.elements[0].x ) * aa
+                h = ( self.logicalApertures["entrance_pupil"].x - self.optics.elements[0].x ) * aa
                 
             else:
                     
-                h = abs(self.entrancePupil.x - self.object.x) * aa
+                h = abs(self.logicalApertures["entrance_pupil"].x - self.object.x) * aa
                 
             if negative:
                 
@@ -1292,7 +1322,7 @@ class tracingProject:
                 
             if rays>1:
                 
-                ang = np.linspace(aa + self.angularApperture, aa - self.angularApperture, rays)
+                ang = np.linspace(aa + self.angularAperture, aa - self.angularAperture, rays)
                 
             else:
                 
@@ -1327,17 +1357,19 @@ class tracingProject:
         print("Object @{:}".format(self.object.x))
         print("Final Image @{:}".format(self.image.x))
         
-        print("Aperture stop = {:}".format(self.apertureStop.name))
-        print("Field stop = {:}".format(self.fieldStop.name))
+        print("Aperture stop = {:}".format(self.logicalApertures["aperture_stop"].name))
+
+        if self.logicalApertures["field_stop"] is not None:
+            print("Field stop = {:}".format(self.logicalApertures["field_stop"].name))
         
         degFOV = math.degrees(self.FOV)
         
         print("Field of View: {:}".format(degFOV))
         
-        print(self.entrancePupil)
-        print(self.exitPupil)
-        print(self.entranceWindow)
-        print(self.exitWindow)
+        print(self.logicalApertures["entrance_pupil"])
+        print(self.logicalApertures["exit_pupil"])
+        print(self.logicalApertures["entrance_window"])
+        print(self.logicalApertures["exit_window"])
               
     
 
@@ -1358,7 +1390,7 @@ class lensrender:
     
     
     
-    def __init__(self,name="untitled.svg",size=(DEFAULT_DISPLAY_WIDTH,DEFAULT_DISPLAY_HEIGHT),profile="full"):
+    def __init__(self,project=None,name="untitled.svg",size=(DEFAULT_DISPLAY_WIDTH,DEFAULT_DISPLAY_HEIGHT),profile="full"):
     
         self.display_height = size[1]
         self.display_width = size[0]
@@ -1368,7 +1400,8 @@ class lensrender:
         self.element_thickness = lensrender.DEFAULT_ELEMENT_THICKNESS 
         self.axis_height = 0.5 * self.display_height
         self.x_origin = -30
-        self.max_apperture = 100
+        self.max_Aperture = 100
+        self.project = project
         
         self.svgdrawing = svgwrite.Drawing(name,size=size,profile=profile)
         self.inkscape = Inkscape(self.svgdrawing)
@@ -1398,10 +1431,8 @@ class lensrender:
             
         self.group_colors = ["#FF0000","#FF0000","#00FF00","#0000FF","#00FFFF","#FF00FF","FFFF00"]
         
-        
-        
         self.styles = {    
-        "missing_style":{"stroke":"#FF0000","stroke_width":1,"fill":"none","stroke_dasharray":"3,3"},
+        "missing_style":{"stroke":"#FF0000","stroke_width":3,"fill":"none","stroke_dasharray":"3,3"},
         "plane":{"stroke":"#090909","stroke_width":0.5,"fill":"none","stroke_dasharray":"8,8"},
         "lens":{"stroke":"#000000","stroke_width":0.5,"fill":"#CCCCCC","stroke_dasharray":"100,0"},
         "aperture":{"stroke":"#000000","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
@@ -1418,6 +1449,13 @@ class lensrender:
         "object_style":{"stroke":"#000000","stroke_width":1.0,"fill":"#000000","stroke_dasharray":"100,0"},
         "image_style":{"stroke":"#020202","stroke_width":1.0,"fill":"#020202","stroke_dasharray":"100,0"}
     
+        }
+
+        self.path_method = {
+            "lens":self.svgThinLens,
+            "aperture":self.svgAperture,
+            "object":self.svgObject,
+            "plane":self.svgPlane
         }
         
     def save_drawing(self):
@@ -1444,9 +1482,9 @@ class lensrender:
         
         return R,sag
     
-    def drawPlane(self,x):
+    def svgPlane(self,el):
         
-        sx, sy = self.scale_point((x,0))
+        sx, sy = self.scale_element_position(el)
         
         path = svg_path(sx,sy)
         
@@ -1455,30 +1493,30 @@ class lensrender:
     
         return path
 
-    def drawObject(self,x,diameter,scale=1):
+    def svgObject(self,el):
 
-        sx, sy = self.scale_point((x,0))
+        sx, sy = self.scale_element_position(el)
 
         path = svg_path(sx,sy)
 
-        path.moveRel(0, 0.5 * scale * diameter * self.scale_elements)
-        path.verticalRel(-1 * scale * diameter * self.scale_elements)
-        path.lineRel(-3*scale,7*scale)
-        path.lineRel(6*scale,0)
-        path.lineRel(-3*scale,-7*scale)
+        d = math.copysign(1,el.diameter) # Makes sure arrowhead points right way (-ve diameter for inverted image)
+
+        path.moveRel(0, 0.5 * el.diameter * self.scale_elements)
+        path.verticalRel(-1 * el.diameter * self.scale_elements)
+        path.lineRel(-3,7*d)
+        path.lineRel(6,0)
+        path.lineRel(-3,-7*d)
 
         return path
-
-
     
-    def drawAperture(self,x,diameter):
+    def svgAperture(self,el):
         
-        sx, sy = self.scale_point((x,0))
+        sx, sy = self.scale_element_position(el)
         
         path = svg_path(sx,sy)
         
-        disp_diameter = diameter * self.scale_elements
-        h = self.max_apperture * self.scale_elements
+        disp_diameter = el.diameter * self.scale_elements
+        h = self.max_Aperture * self.scale_elements
             
         if disp_diameter > h-5:
             
@@ -1500,16 +1538,16 @@ class lensrender:
         
         return path
     
-    def drawThinLens(self,x,diameter,r0,r1):
+    def svgThinLens(self,el):
         
-        sx, sy = self.scale_point((x,0))
+        sx, sy = self.scale_element_position(el)
         
         path = svg_path(sx,sy)
         
-        DLens = diameter * self.scale_elements
+        DLens = el.diameter * self.scale_elements
         
-        R0,lsag = self.get_lens_surface_params(r0, diameter)       
-        R1,rsag = self.get_lens_surface_params(r1, diameter)
+        R0,lsag = self.get_lens_surface_params(el.r0, el.diameter)       
+        R1,rsag = self.get_lens_surface_params(el.r1, el.diameter)
   
         # Checks for visual interference between the curved surfaces and pad out thickness if necessary    
             
@@ -1552,9 +1590,9 @@ class lensrender:
         
         return path
     
-    
+## Scaling functions
 
-    def get_element_position(self,el):
+    def scale_element_position(self,el):
 
         return self.scale_point((el.x,0))
     
@@ -1562,11 +1600,11 @@ class lensrender:
         
         return (p[0] * self.scale_position - self.x_origin, self.axis_height - p[1] * self.scale_elements)
 
-    def setHorizontalScaleFromProject(self,project):
+    def setHorizontalScaleFromProject(self):
 
-        projectWidth = project.outputLocation - project.inputLocation
+        projectWidth = self.project.outputLocation - self.project.inputLocation
         self.scale_position = self.display_width / projectWidth
-        self.x_origin = project.inputLocation * self.scale_position
+        self.x_origin = self.project.inputLocation * self.scale_position
 
     def setHorizontalScale(self,left,right):
 
@@ -1579,55 +1617,57 @@ class lensrender:
 
         self.scale_elements = fill * self.display_height / height
 
+## SVG Element creatiom
 
-    def drawOpticElement(self,el,layer,style = None):
-        
-        path = el.svgPath(self)
+    def renderElement(self,el,layer,style_name=None,name=None,force_type=None):
+
+        if force_type is None:
+            func_name = el.drawType
+        else:
+            func_name = force_type
+
+        path = self.path_method[func_name](el)
+
         path_string = path.get_path_string()
 
-        if style is None:
+        if style_name is None:
             
-            
-            if el.drawType in self.styles:
-                style = self.styles[el.drawType]
-            else:
-                style = self.styles["missing_style"]
-                
-                
-            print(style)
+            style_name = el.drawType
+        
+        if style_name in self.styles: 
+            style = self.styles[style_name]
+        else:
+            style = self.styles["missing_style"]
 
         path_element = self.svgdrawing.path(path_string,**style)
+
+        print(layer)
         self.layers[layer].add(path_element)
-        
-    def drawOpticElementAsAperture(self,el,layer,style=None, name=None):
-        
-        if name is None:
-            name = el.name
-            
-        ap = aperture.from_element(el, name)
-        
-        self.drawOpticElement(ap,layer,style)
 
-    def drawSourceObject(self,project):
 
-        if project.object is not None:
 
-            path = project.object.svgPath(self)
+    def drawObject(self):
 
-            path_string = path.get_path_string()
+        if self.project.object is not None:
 
-            style = self.styles["object_style"]
+            if abs(self.project.object.x) != np.inf:
 
-            path_element = self.svgdrawing.path(path_string,**style)
-            self.layers["objects"].add(path_element)
+                path = self.svgObject(self.project.object)
 
-    def drawFinalImage(self,project):
+                path_string = path.get_path_string()
 
-        if project.image is not None:
+                style = self.styles["object_style"]
 
-            if abs(project.image.x) != np.inf:
+                path_element = self.svgdrawing.path(path_string,**style)
+                self.layers["objects"].add(path_element)
 
-                path = project.image.svgPath(self)
+    def drawImage(self):
+
+        if self.project.image is not None:
+
+            if abs(self.project.image.x) != np.inf:
+
+                path = self.svgObject(self.project.image)
 
                 path_string = path.get_path_string()
 
@@ -1635,26 +1675,40 @@ class lensrender:
 
                 path_element = self.svgdrawing.path(path_string,**style)
                 self.layers["images"].add(path_element)
-
-
         
         
-    def drawOpticalSystem(self,optics):
+    def drawOpticalSystem(self):
         
-        for el in optics.elements:
+        for el in self.project.optics.elements:
             
-            self.drawOpticElement(el, "optics")
+            #self.drawOpticElement(el, "optics")
+
+            self.renderElement(el,"optics")
+
+    def drawLogicalApertures(self):
+
+        for k,v in self.project.logicalApertures.items():
+
+            if v is not None:
+
+                layer_name = k.split('_')[-1] + 's'
+
+                self.renderElement(v,layer=layer_name,style_name=k,force_type="aperture")
+
             
     def drawOpticalAxis(self):
         
         axis = self.svgdrawing.line( start = (0,self.axis_height),end = (self.display_width,self.axis_height),** self.styles["axis_style"])
         self.layers["axis"].add(axis)
-            
 
-        
- 
+    def drawAllTraces(self,virtuals=False):
 
-    def drawRayTrace(self,ray):
+        for ray in self.project.traces:
+
+            self.drawRayTrace(ray,virtuals)
+             
+
+    def drawRayTrace(self,ray,virtuals=False):
         
         print("Drawing trace")
 
@@ -1691,11 +1745,44 @@ class lensrender:
             
                 previous = element
 
+            if virtuals:
+
+                last_lens = self.project.optics.getLenses()[-1]
+
+                final_ray = [r for r in ray.trace if r.source == last_lens][0]
+
+                x1, y1 = self.scale_point(final_ray.xy())
+
+                xi = self.project.image.x
+
+                if xi < x1:
+
+                    yi = final_ray.height() + (xi - final_ray.x) * final_ray.angle()  # NOT WORKING!!!
+
+                    x2, y2 = self.scale_point((xi,yi))
+                
+                    rstyle =  deepcopy(self.styles["virtual_trace"])    
+                    rstyle["stroke"] = self.group_colors[ray.group] 
+
+                    print("drawing virtual line")
+                    
+                    line = self.svgdrawing.line( start = (x1,y1),end = (x2,y2),**rstyle)
+                    self.rayTraceLayers[ray.group].add(line)
+
+
+
+
             print("trace done")
-            
 
-            
+    def drawAll(self,virtuals=False):
 
+        self.drawOpticalSystem()
+        self.drawOpticalAxis()
+        self.drawAllTraces(virtuals)
+        self.drawLogicalApertures()
+        self.drawObject()
+        self.drawImage()
+            
 
 class svg_path:
     
