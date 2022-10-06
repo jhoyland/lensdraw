@@ -590,17 +590,17 @@ class thinLens(aperture):
     def setf(self,f,form='plano',flatLeft=False):
         
         self.f = f
+
+        print("setting f = {:}".format(f))
+        print("form = " + form)
         
         if form == 'plano':
-            radii = (planolenscurvature(self.f, self.n),np.inf)
-            self.r0 = radii[flatLeft]
-            self.r1 = radii[not flatLeft]
-        elif form == 'bi':
-            self.r0 = bilenscurvature(self.f,self.n)
-            self.r1 = -self.r0
+            self.makePlano(flatLeft)
+        #elif form == 'bi':
         else:
-            self.r0 = bilenscurvature(self.f,self.n)
-            self.r1 = -self.r0
+            self.makeBi()
+
+        print("radii = {:}, {:}".format(self.r0,self.r1))
             
         self.constrainDiameter()        
             
@@ -940,7 +940,7 @@ class tracingProject:
         if self.image is not None:
             
             return (self.image.x - self.optics.elements[-1].x < 0) or (self.image.x == np.inf)
-        
+            
         return False
     
                 
@@ -1192,7 +1192,7 @@ class tracingProject:
 
         if self.logicalApertures["field_stop"] is None:
 
-            self.FOV = math.pi
+            self.FOV = math.pi * 0.999
 
             return
 
@@ -1248,6 +1248,8 @@ class tracingProject:
         
         for h in hs:                      
             self.addTrace(h,a,group)
+
+
             
     def addTracesFillFirstElement(self,h,fill_factor=0.9,numberStep=10,method='number',group=0):
         
@@ -1290,47 +1292,98 @@ class tracingProject:
                 
             else:
                 
-                self.addTrace(0,aa,group)      
-        
-    def addFullFieldChiefRay(self,group=0,negative=True,rays=1):
-        
-        if self.logicalApertures["entrance_pupil"] is not None:
-            
-            aa = self.FOV * 0.5 * 0.99
-                
-            # Object is at infinity and entrancePupil is behind the first element
-            # Trace the chief ray back to the first element to give it a height
-            # This is needed becuase the ray tracer measures initial ray height for 
-            #infinite objectson the front element and calculates back. May need to 
-            # rethink this
-                
-            if self.object.x == -np.inf and self.logicalApertures["entrance_pupil"].x > self.optics.elements[0].x:
-                
-                h = ( self.logicalApertures["entrance_pupil"].x - self.optics.elements[0].x ) * aa
-                
-            else:
-                    
-                h = abs(self.logicalApertures["entrance_pupil"].x - self.object.x) * aa
-                
-            if negative:
-                
-                aa = -aa
-                
-            else:
-                
-                h = -h
-                
-            if rays>1:
-                
-                ang = np.linspace(aa + self.angularAperture, aa - self.angularAperture, rays)
-                
-            else:
-                
-                ang = [aa]
+                self.addTrace(0,aa,group)  
 
-            for a in ang:
-                
-                self.addTrace(h,a,group)
+    # Adds a chief ray based on height. For a finite object the height is the height off the axis at the object point
+    # For an object at infinity the height is the height the ray at the first element
+
+
+    def addChiefRayInfiniteObject(self,a=0,method='angle',group=0,rays=1):
+
+        if self.logicalApertures["entrance_pupil"] is not None:
+
+            if method == "top":
+
+                method = 'FOV'
+                a = 1
+
+            if method == "bottom":
+
+                method = 'FOV'
+                a = -1
+
+            if method in "FOVobject":
+
+                a = a * self.FOV * 0.5 * 0.99
+
+            h = -a * (self.optics.elements[0].x - self.logicalApertures["entrance_pupil"].x)
+
+            if rays <= 1:
+
+                hh = [h]
+
+            else:
+
+                ap = self.angularAperture * 0.999
+                hh = np.linspace(h - ap, h + ap, rays)
+
+            self.addTracesHeightRange(hh,a,group)            
+
+
+    def addChiefRayFiniteObject(self,h=0,method='height',group=0,rays=1):
+
+        if self.logicalApertures["entrance_pupil"] is not None:
+
+            d = (self.object.x - self.logicalApertures["entrance_pupil"].x)
+
+            print("h argument = " + str(h))
+
+            if method=="top":    # Rays from top of object
+
+                method="object"
+                h=1
+
+            if method=="bottom": # Rays from bottom of object
+
+                method="object"
+                h=-1
+
+            if method=="object": # Rays from height relative to object height
+
+                h = h * self.object.diameter * 0.5
+
+            if method=="FOV":   # Rays from height relative to field of view
+
+                a = h * self.FOV * 0.5 * 0.99
+                h = a * d
+
+            else: # For both 'object' and 'height' angle is calulated from h
+
+                a = h / d 
+
+
+            if rays <= 1:
+
+                aa = [a]
+
+            else:
+
+                ap = self.angularAperture * 0.999
+                aa = np.linspace(a - ap, a + ap, rays)
+
+            self.addTracesAngleRange(h,aa,group)  
+
+    def addChiefRays(self,h=1,method="FOV",group=0,rays=1):
+
+        if self.object.x == -np.inf:
+
+            self.addChiefRayInfiniteObject(a=h,method=method,group=group,rays=rays)
+
+        else:
+
+            self.addChiefRayFiniteObject(h=h,method=method,group=group,rays=rays)
+
+
     
     def traceAll(self,toBlocked = True, clip = True):
         
@@ -1355,7 +1408,16 @@ class tracingProject:
             print(e)
             
         print("Object @{:}".format(self.object.x))
-        print("Final Image @{:}".format(self.image.x))
+        print("Final Image @{:} (From last element = {:})".format(self.image.x,self.imageDistance))
+
+        if self.imageIsVirtual():
+
+            print("Virtual image")
+
+        else:
+
+            print("Real image")
+
         
         print("Aperture stop = {:}".format(self.logicalApertures["aperture_stop"].name))
 
@@ -1429,22 +1491,22 @@ class lensrender:
         for layer in self.layers:
             self.svgdrawing.add(self.layers[layer])
             
-        self.group_colors = ["#FF0000","#FF0000","#00FF00","#0000FF","#00FFFF","#FF00FF","FFFF00"]
+        self.group_colors = ["#FF0000","#E00000","#29ab93","#0000FF","#00FFFF","#FF00FF","FFFF00"]
         
         self.styles = {    
         "missing_style":{"stroke":"#FF0000","stroke_width":3,"fill":"none","stroke_dasharray":"3,3"},
         "plane":{"stroke":"#090909","stroke_width":0.5,"fill":"none","stroke_dasharray":"8,8"},
-        "lens":{"stroke":"#000000","stroke_width":0.5,"fill":"#CCCCCC","stroke_dasharray":"100,0"},
+        "lens":{"stroke":"#000000","stroke_width":1.0,"fill":"#CCCCCC","stroke_dasharray":"100,0"},
         "aperture":{"stroke":"#000000","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
         "trace":{"stroke":"#FF0000","stroke_width":0.5,"fill":"none","stroke_dasharray":"100,0"},
         "virtual_trace":{"stroke":"#FF0000","stroke_width":0.5,"fill":"none","stroke_dasharray":"1,1"},
         "blocked_trace":{"stroke":"#440000","stroke_width":0.5,"fill":"none","stroke_dasharray":"100,0"},
         "aperture_stop":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
         "field_stop":{"stroke":"#990000","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "entrance_pupil":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "exit_pupil":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "entrance_window":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "exit_window":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "entrance_pupil":{"stroke":"#007710","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "exit_pupil":{"stroke":"#005010","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "entrance_window":{"stroke":"#770010","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "exit_window":{"stroke":"#500010","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
         "axis_style":{"stroke":"#040404","stroke_width":2.0,"fill":"none","stroke_dasharray":"10,4"},
         "object_style":{"stroke":"#000000","stroke_width":1.0,"fill":"#000000","stroke_dasharray":"100,0"},
         "image_style":{"stroke":"#020202","stroke_width":1.0,"fill":"#020202","stroke_dasharray":"100,0"}
@@ -1467,7 +1529,7 @@ class lensrender:
     
     def get_lens_surface_params(self,r,d):
         
-        if r == np.inf:
+        if abs(r) == np.inf:
             
             return r,0
         
@@ -1546,8 +1608,15 @@ class lensrender:
         
         DLens = el.diameter * self.scale_elements
         
-        R0,lsag = self.get_lens_surface_params(el.r0, el.diameter)       
-        R1,rsag = self.get_lens_surface_params(el.r1, el.diameter)
+        R0,lsag = self.get_lens_surface_params( el.r0, el.diameter)       
+        R1,rsag = self.get_lens_surface_params( el.r1, el.diameter)
+
+        rsag = -rsag # Sagitta for right surface needs to be flipped due to radius sign convention
+
+        print("Drawing lens {:}".format(el.name))
+
+        print("R0={:} lsag={:}".format(R0,lsag))
+        print("R1={:} rsag={:}".format(R1,rsag))
   
         # Checks for visual interference between the curved surfaces and pad out thickness if necessary    
             
@@ -1600,6 +1669,10 @@ class lensrender:
         
         return (p[0] * self.scale_position - self.x_origin, self.axis_height - p[1] * self.scale_elements)
 
+    def scale_length(self,length):
+
+        return length * self.scale_position
+
     def setHorizontalScaleFromProject(self):
 
         projectWidth = self.project.outputLocation - self.project.inputLocation
@@ -1621,30 +1694,32 @@ class lensrender:
 
     def renderElement(self,el,layer,style_name=None,name=None,force_type=None):
 
-        if force_type is None:
-            func_name = el.drawType
-        else:
-            func_name = force_type
+        scaled_x, scaled_d = self.scale_point((el.x,el.diameter))
+        if (abs(scaled_x) < 2*self.display_width) and (abs(scaled_d) < 2*self.display_height):
 
-        path = self.path_method[func_name](el)
+            if force_type is None:
+                func_name = el.drawType
+            else:
+                func_name = force_type
 
-        path_string = path.get_path_string()
+            path = self.path_method[func_name](el)
 
-        if style_name is None:
+            path_string = path.get_path_string()
+
+            if style_name is None:
+                
+                style_name = el.drawType
             
-            style_name = el.drawType
-        
-        if style_name in self.styles: 
-            style = self.styles[style_name]
-        else:
-            style = self.styles["missing_style"]
+            if style_name in self.styles: 
+                style = self.styles[style_name]
+            else:
+                style = self.styles["missing_style"]
 
-        path_element = self.svgdrawing.path(path_string,**style)
+            path_element = self.svgdrawing.path(path_string,**style)
+            path_element.attribs["id"] = el.name
 
-        print(layer)
-        self.layers[layer].add(path_element)
-
-
+            print(layer)
+            self.layers[layer].add(path_element)
 
     def drawObject(self):
 
@@ -1659,6 +1734,7 @@ class lensrender:
                 style = self.styles["object_style"]
 
                 path_element = self.svgdrawing.path(path_string,**style)
+
                 self.layers["objects"].add(path_element)
 
     def drawImage(self):
@@ -1710,25 +1786,16 @@ class lensrender:
 
     def drawRayTrace(self,ray,virtuals=False):
         
-        print("Drawing trace")
-
-        print(ray)
+       
 
         if len(ray.trace) > 0:
-
-            print("trace found")
         
             if not ray.group in self.rayTraceLayers:
-                
-                print("new layer")
 
                 self.rayTraceLayers[ray.group] = self.inkscape.layer(label = "rayGroup{}".format(ray.group))
                 self.svgdrawing.add(self.rayTraceLayers[ray.group]) 
            
             previous = ray.trace[0]
-            
-                        
-            print("starting trace")
 
             for element in ray.trace[1:]:
                                 
@@ -1737,8 +1804,6 @@ class lensrender:
                 
                 rstyle =  deepcopy((self.styles["trace"],self.styles["blocked_trace"])[int(previous.blocked)])    
                 rstyle["stroke"] = self.group_colors[ray.group] 
-
-                print("drawing line")
                 
                 line = self.svgdrawing.line( start = (x1,y1),end = (x2,y2),**rstyle)
                 self.rayTraceLayers[ray.group].add(line)
@@ -1763,16 +1828,11 @@ class lensrender:
                 
                     rstyle =  deepcopy(self.styles["virtual_trace"])    
                     rstyle["stroke"] = self.group_colors[ray.group] 
-
-                    print("drawing virtual line")
                     
                     line = self.svgdrawing.line( start = (x1,y1),end = (x2,y2),**rstyle)
                     self.rayTraceLayers[ray.group].add(line)
 
 
-
-
-            print("trace done")
 
     def drawAll(self,virtuals=False):
 
