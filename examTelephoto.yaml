@@ -1,0 +1,16 @@
+---
+optics:
+  - name: lens1
+    type: lens
+    form: bi
+    f: 100
+    x: 0
+    d: 22
+  - name: lens2
+    type: lens
+    form: bi
+    f: -60
+    x: 75
+    d: 12
+    afterElement: lens1
+...

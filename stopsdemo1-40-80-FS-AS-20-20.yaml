@@ -1,0 +1,36 @@
+---
+optics:
+  - name: objective
+    type: lens
+    form: bi
+    f: 28
+    x: 0
+    d: 40
+  - name: as1
+    type: aperture
+    x: 14
+    d: 20
+    afterElement: objective
+  - name: fs1
+    type: aperture
+    x: 56
+    d: 20
+    afterElement: objective
+  - name: eyepiece
+    type: lens
+    form: bi
+    flatLeft: true
+    f: 26
+    x: 100
+    d: 80
+    afterElement: objective
+...
+
+
+
+
+
+
+
+
+

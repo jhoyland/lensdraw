@@ -1,0 +1,21 @@
+Optical system:
+Thin lens: lens1 @0 diameter=50 f=150
+Thin lens: lens2 @100 diameter=40 f=-210
+System matrix:
+[[ 3.33333333e-01  1.00000000e+02]
+ [-5.07936508e-03  1.47619048e+00]]
+Object @-1e+09 (From EP= 1e+09)
+Final Image @165.6 (From last element = 65.63) (From XP = 133.4)
+Magnifcation = -1.969e-07  (From effective si/so -1.334e-07)
+System matrix with image/object distances
+[[-1.96875057e-07  5.22956611e-09]
+ [-5.07936508e-03 -5.07936360e+06]]
+Real image
+Aperture stop = lens1
+Field stop = lens2
+Field of View: 0.39999999999999997 (22.91831180523293 degrees)
+Angular aperture 2.5e-08 (1.432394487827058e-06 degrees)
+Effective aperture: __entrance_pupil__ @0 diameter=50
+Effective aperture: __exit_pupil__ @32.25806451612904 diameter=33.87096774193549
+Effective aperture: __entrance_window__ @300.00000000000006 diameter=120.00000000000001
+Effective aperture: __exit_window__ @100 diameter=40

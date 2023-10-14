@@ -1,0 +1,37 @@
+---
+object:
+  x: -56
+  d: 25
+inputPlane:
+  x: -100
+  relativeTo: object 
+outputPlane:
+  x: 0
+  relativeTo: image
+rays:
+  - type: chief
+    method: marginal  
+    group: 1
+    rays: 9
+  - type: chief
+    method: FOV  
+    group: 2
+    rays: 9
+  - type: chief
+    method: FOV 
+    h: -1 
+    group: 2
+    rays: 9
+  - type: chief
+    method: top  
+    group: 3
+    rays: 9
+  - type: chief
+    method: bottom  
+    group: 3
+    rays: 9
+  - type: single
+    h: 0
+    a: 0.3
+    group: 4
+...

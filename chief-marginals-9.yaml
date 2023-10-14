@@ -1,0 +1,25 @@
+---
+object:
+  x: -56
+  d: 25
+inputPlane:
+  x: -100
+  relativeTo: object 
+outputPlane:
+  x: 0
+  relativeTo: image
+rays:
+  - type: chief
+    method: marginal  
+    group: 1
+    rays: 9
+  - type: chief
+    method: object  
+    group: 2
+    rays: 9
+  - type: chief
+    method: object 
+    h: -1 
+    group: 2
+    rays: 9
+...

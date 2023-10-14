@@ -1,0 +1,32 @@
+---
+optics:
+  - name: lens1
+    type: lens
+    form: plano
+    f: 52
+    x: 0
+    d: 50
+  - name: lens2
+    type: lens
+    form: plano
+    f: 40
+    x: 15
+    d: 40
+    afterElement: lens1
+  - name: lens3
+    type: lens
+    form: plano
+    flatLeft: true
+    f: 19
+    x: 55
+    d: 17
+    afterElement: lens2
+  - name: lens4
+    type: lens
+    form: plano
+    flatLeft: true
+    f: 33
+    x: 75
+    d: 45
+    afterElement: lens2
+...

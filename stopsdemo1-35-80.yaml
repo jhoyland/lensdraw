@@ -1,0 +1,26 @@
+---
+optics:
+  - name: objective
+    type: lens
+    form: bi
+    f: 28
+    x: 0
+    d: 35
+  - name: eyepiece
+    type: lens
+    form: bi
+    flatLeft: true
+    f: 26
+    x: 100
+    d: 80
+    afterElement: objective
+...
+
+
+
+
+
+
+
+
+

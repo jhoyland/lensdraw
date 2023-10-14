@@ -298,8 +298,6 @@ class opticalSystem:
             app.x = x
             self.addElement(app)
         
-        
-        
     
     def getElementByName(self,name):
         el = [e for e in self.elements if e.name == name]
@@ -312,16 +310,51 @@ class opticalSystem:
     def getLenses(self):
 
         return [e for e in self.elements if e.drawType == "lens"]    
-
-
-    
-    
+  
         
     def removeElement(self,name):
         el = self.getElementByName(name)
         
         if el is not None:
             self.elements.remove(el)
+
+    def loadElements(self,dict):
+
+        # print("Loading:")
+        # print(dict)
+
+        for e in dict:
+
+            if 'type' in e:
+
+                typ = e.pop('type')
+
+                if typ == 'lens':
+
+                    if 'f' in e:
+
+                        self.addLens(**e)
+
+                    else:
+
+                        self.addLensFromRadii(**e)
+
+                if typ == 'aperture':
+
+                    self.addAperture(**e)
+
+
+
+    def printSystem(self):
+
+        print("ELEMENTS:")
+
+        for el in self.elements:
+
+            print(el)
+
+        print("...")
+
         
           
                 
@@ -363,8 +396,7 @@ class opticalSystem:
                                     
             else:
                 
-                if fromElement == element.name or fromElement == '__all__':
-                    
+                if fromElement == element.name or fromElement == '__all__':                    
                     
                     if inclusive[0]:
                         sysMatrix = element.getMatrix()
@@ -512,11 +544,7 @@ class aperture(opticalPlane):
     
     def svgPath(self, drawing):
         
-        return drawing.drawAperture(self.x,self.diameter)
-    
-
-        
-        
+        return drawing.drawAperture(self.x,self.diameter)        
     
 class imageSensor(occluder):
     
@@ -556,8 +584,6 @@ class thinLens(aperture):
         
         self.drawType = "lens"
         
-        
-
                 
     def __str__(self):
         
@@ -591,8 +617,8 @@ class thinLens(aperture):
         
         self.f = f
 
-        print("setting f = {:}".format(f))
-        print("form = " + form)
+        # print("setting f = {:}".format(f))
+        # print("form = " + form)
         
         if form == 'plano':
             self.makePlano(flatLeft)
@@ -600,7 +626,7 @@ class thinLens(aperture):
         else:
             self.makeBi()
 
-        print("radii = {:}, {:}".format(self.r0,self.r1))
+    #    print("radii = {:}, {:}".format(self.r0,self.r1))
             
         self.constrainDiameter()        
             
@@ -826,7 +852,7 @@ class tracingProject:
         
         self.object.optics = self.optics
 
-    def setInputPlane(self,position=DEFAULT_INPUT_LOCATION,relativeTo='object'):
+    def setInputPlane(self,x=DEFAULT_INPUT_LOCATION,relativeTo='object'):
         
         if relativeTo=='object':
             
@@ -838,18 +864,18 @@ class tracingProject:
                 
                 if abs(self.object.x) == np.inf:
                     
-                    self.inputLocation = position
+                    self.inputLocation = x
                     
                 else:
                     
-                    self.inputLocation = self.object.x + position
+                    self.inputLocation = self.object.x + x
                     
         
         if relativeTo=='firstElement':
             
-            self.inputLocation = position
+            self.inputLocation = x
         
-    def setOutputPlane(self,position=DEFAULT_OUTPUT_LOCATION,relativeTo='auto'):
+    def setOutputPlane(self,x=DEFAULT_OUTPUT_LOCATION,relativeTo='auto'):
         
         if relativeTo == 'auto':
             
@@ -860,7 +886,7 @@ class tracingProject:
             else:
                 
                 relativeTo = 'image'
-                position = 0
+                x = 0
                     
         
         if relativeTo =='image':
@@ -871,7 +897,7 @@ class tracingProject:
                 
             else:
                 
-                L = self.image.x + position
+                L = self.image.x + x
                 
                 if L < self.optics.getTotalLength() or abs(L) == np.inf:
                     
@@ -883,11 +909,11 @@ class tracingProject:
                     
         if relativeTo == 'lastElement':
             
-            self.outputLocation = position + self.optics.getTotalLength()
+            self.outputLocation = x + self.optics.getTotalLength()
             
         if relativeTo == 'firstElement':
             
-            self.outputLocation = position
+            self.outputLocation = x
            
 # SOLVE SYSTEM
       
@@ -976,14 +1002,14 @@ class tracingProject:
         finiteObject = abs(self.object.x) != np.inf
 
 
-        print("Finding Aperture  stop")
+#        print("Finding Aperture  stop")
         
             
         
         initialTransferMatrix = (identityMatrix(),translationMatrix(abs(self.object.x)))[finiteObject]
         
         for element in self.optics.elements:
-            print("Checking element: " + element.name)
+          #  print("Checking element: " + element.name)
             
             if element.diameter < np.inf:
                 
@@ -1068,7 +1094,7 @@ class tracingProject:
         
         #initialTransferMatrix = (identityMatrix(),translationMatrix(abs(self.object.x)))[finiteObject]
         
-        print("Finding field stop")
+      #  print("Finding field stop")
 
         if len(self.optics.elements) <= 1:
 
@@ -1078,10 +1104,9 @@ class tracingProject:
         
         for element in self.optics.elements:
             
-            print("Checking element: " + element.name)
+       #     print("Checking element: " + element.name)
             
             if element.diameter < np.inf:
-
 
                 
                 if not(element.name == self.logicalApertures["aperture_stop"].name):
@@ -1105,7 +1130,7 @@ class tracingProject:
                                             
                         r0 = abs(element.diameter / (2*mxel)) % (2*math.pi)
                         
-                        print("Diameter = {:}   Angle = {:}".format(element.diameter,r0))
+                 #       print("Diameter = {:}   Angle = {:}".format(element.diameter,r0))
                     
                         if r0 < aF:
                             
@@ -1147,7 +1172,7 @@ class tracingProject:
             
             return True
 
-        print("No entranceWindow")
+      #  print("No entranceWindow")
         
         return False   
     
@@ -1196,7 +1221,7 @@ class tracingProject:
 
             return
 
-        print(self.logicalApertures["entrance_window"])
+       # print(self.logicalApertures["entrance_window"])
         
         dEW = 0.5* self.logicalApertures["entrance_window"].diameter
         #dEP = 0.5* self.logicalApertures["entrance_pupil"].diameter
@@ -1248,6 +1273,34 @@ class tracingProject:
         
         for h in hs:                      
             self.addTrace(h,a,group)
+
+
+    def addTracesFillAngularAperture(self,h=0,fill_factor=0.9,numberStep=10,method='number',group=0):
+                
+        if h == 'top':
+            h = self.object.diameter * 0.5
+        if h == 'bottom':
+            h = -self.object.diameter * 0.5
+
+        d = fill_factor * self.angularAperture 
+
+        dx = self.logicalApertures['entrancePupil'].x - self.object.x  
+        
+        if self.object.x == -np.inf:
+
+            pass
+
+        else:
+
+            a = h / dx
+
+            aa = np.linspace(a-d,a+d,numberStep)
+
+            self.addTracesAngleRange(h,aa,group=group)
+
+
+
+
 
 
             
@@ -1336,7 +1389,12 @@ class tracingProject:
 
             d = (self.object.x - self.logicalApertures["entrance_pupil"].x)
 
-            print("h argument = " + str(h))
+       #     print("h argument = " + str(h))
+
+            if method=="marginal":
+
+                method = "height"
+                h=0
 
             if method=="top":    # Rays from top of object
 
@@ -1373,6 +1431,8 @@ class tracingProject:
 
             self.addTracesAngleRange(h,aa,group)  
 
+    # TODO: Change the name of this, it does more than chief rays
+
     def addChiefRays(self,h=1,method="FOV",group=0,rays=1):
 
         if self.object.x == -np.inf:
@@ -1406,9 +1466,41 @@ class tracingProject:
         for e in self.optics.elements:
             
             print(e)
+
+
+        syMx = self.optics.getSystemMatrix()
+
+        print("System matrix:")
+
+        print(syMx)
+        si = self.image.x - self.logicalApertures["exit_pupil"].x
+        so = self.logicalApertures["entrance_pupil"].x - self.object.x
             
-        print("Object @{:}".format(self.object.x))
-        print("Final Image @{:} (From last element = {:})".format(self.image.x,self.imageDistance))
+        print("Object @{:.4g} (From EP= {:.4g})".format(self.object.x,so))
+        print("Final Image @{:.4g} (From last element = {:.4g}) (From XP = {:.4g})".format(self.image.x,self.imageDistance,si))
+        print("Magnifcation = {:.4g}  (From effective si/so {:.4g})".format(self.image.mag, -si/so))
+
+        if abs(self.imageDistance) == np.inf:
+
+            im = identityMatrix()
+
+        else:
+
+            im = translationMatrix(self.imageDistance)
+
+        if abs(self.object.x) == np.inf:
+
+            om = identityMatrix()
+
+        else:
+
+            om = translationMatrix(- self.object.x)
+
+        totalSyMx = im * syMx * om 
+
+        print("System matrix with image/object distances")
+
+        print(totalSyMx)
 
         if self.imageIsVirtual():
 
@@ -1425,18 +1517,22 @@ class tracingProject:
             print("Field stop = {:}".format(self.logicalApertures["field_stop"].name))
         
         degFOV = math.degrees(self.FOV)
+        degAA = math.degrees(self.angularAperture)
         
-        print("Field of View: {:}".format(degFOV))
+
+
+        print("Field of View: {:} ({:} degrees)".format(self.FOV,degFOV))
+        print("Angular aperture {:} ({:} degrees)".format(self.angularAperture,degAA))
         
         print(self.logicalApertures["entrance_pupil"])
         print(self.logicalApertures["exit_pupil"])
         print(self.logicalApertures["entrance_window"])
         print(self.logicalApertures["exit_window"])
+
+
               
     
 
-              
-            
 class lensrender:
     
     DEFAULT_SCALE_POSITIONING = 3  # 1 pixel = 1 mm, used for positioning of planes
@@ -1447,9 +1543,6 @@ class lensrender:
     DEFAULT_DISPLAY_WIDTH = 960
     
     DEFAULT_ELEMENT_THICKNESS = 2
-    
- 
-    
     
     
     def __init__(self,project=None,name="untitled.svg",size=(DEFAULT_DISPLAY_WIDTH,DEFAULT_DISPLAY_HEIGHT),profile="full"):
@@ -1501,12 +1594,12 @@ class lensrender:
         "trace":{"stroke":"#FF0000","stroke_width":0.5,"fill":"none","stroke_dasharray":"100,0"},
         "virtual_trace":{"stroke":"#FF0000","stroke_width":0.5,"fill":"none","stroke_dasharray":"1,1"},
         "blocked_trace":{"stroke":"#440000","stroke_width":0.5,"fill":"none","stroke_dasharray":"100,0"},
-        "aperture_stop":{"stroke":"#009900","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "field_stop":{"stroke":"#990000","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "entrance_pupil":{"stroke":"#007710","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "exit_pupil":{"stroke":"#005010","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "entrance_window":{"stroke":"#770010","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
-        "exit_window":{"stroke":"#500010","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "aperture_stop":{"stroke":"#FF0000","stroke_width":2,"fill":"none","stroke_dasharray":"100,0"},
+        "field_stop":{"stroke":"#00FF00","stroke_width":2,"fill":"none","stroke_dasharray":"100,0"},
+        "entrance_pupil":{"stroke":"#FF2020","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "exit_pupil":{"stroke":"#FF1010","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "entrance_window":{"stroke":"#20FF20","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
+        "exit_window":{"stroke":"#10FF10","stroke_width":1.5,"fill":"none","stroke_dasharray":"100,0"},
         "axis_style":{"stroke":"#040404","stroke_width":2.0,"fill":"none","stroke_dasharray":"10,4"},
         "object_style":{"stroke":"#000000","stroke_width":1.0,"fill":"#000000","stroke_dasharray":"100,0"},
         "image_style":{"stroke":"#020202","stroke_width":1.0,"fill":"#020202","stroke_dasharray":"100,0"}
@@ -1613,10 +1706,10 @@ class lensrender:
 
         rsag = -rsag # Sagitta for right surface needs to be flipped due to radius sign convention
 
-        print("Drawing lens {:}".format(el.name))
+        # print("Drawing lens {:}".format(el.name))
 
-        print("R0={:} lsag={:}".format(R0,lsag))
-        print("R1={:} rsag={:}".format(R1,rsag))
+        # print("R0={:} lsag={:}".format(R0,lsag))
+        # print("R1={:} rsag={:}".format(R1,rsag))
   
         # Checks for visual interference between the curved surfaces and pad out thickness if necessary    
             
@@ -1718,7 +1811,7 @@ class lensrender:
             path_element = self.svgdrawing.path(path_string,**style)
             path_element.attribs["id"] = el.name
 
-            print(layer)
+        #    print(layer)
             self.layers[layer].add(path_element)
 
     def drawObject(self):
@@ -1814,23 +1907,27 @@ class lensrender:
 
                 last_lens = self.project.optics.getLenses()[-1]
 
-                final_ray = [r for r in ray.trace if r.source == last_lens][0]
+                rays_from_source = [r for r in ray.trace if r.source == last_lens]
 
-                x1, y1 = self.scale_point(final_ray.xy())
+                if len(rays_from_source) > 0:
 
-                xi = self.project.image.x
+                    final_ray = rays_from_source[0]
 
-                if xi < x1:
+                    x1, y1 = self.scale_point(final_ray.xy())
 
-                    yi = final_ray.height() + (xi - final_ray.x) * final_ray.angle()  # NOT WORKING!!!
+                    xi = self.project.image.x
 
-                    x2, y2 = self.scale_point((xi,yi))
-                
-                    rstyle =  deepcopy(self.styles["virtual_trace"])    
-                    rstyle["stroke"] = self.group_colors[ray.group] 
+                    if xi < x1:
+
+                        yi = final_ray.height() + (xi - final_ray.x) * final_ray.angle()  # NOT WORKING!!!
+
+                        x2, y2 = self.scale_point((xi,yi))
                     
-                    line = self.svgdrawing.line( start = (x1,y1),end = (x2,y2),**rstyle)
-                    self.rayTraceLayers[ray.group].add(line)
+                        rstyle =  deepcopy(self.styles["virtual_trace"])    
+                        rstyle["stroke"] = self.group_colors[ray.group] 
+                        
+                        line = self.svgdrawing.line( start = (x1,y1),end = (x2,y2),**rstyle)
+                        self.rayTraceLayers[ray.group].add(line)
 
 
 

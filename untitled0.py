@@ -1,29 +1,29 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 11 22:13:45 2022
+Created on Wed Oct  4 15:12:32 2023
 
-@author: hoyla
+@author: jhoyland
 """
 
+
 import svgwrite
-from IPython.display import SVG,display
+from svgwrite.extensions import Inkscape
+import numpy as np
+
+number = 72
+
+dwg = svgwrite.Drawing('svgwrite-example.svg', profile='tiny')
 
 
-dwg = svgwrite.Drawing('test1.svg',size=(640,480),profile='tiny')
 
+bnum = format(108,"08b")
 
-pathstr = "M20,100 l80,0 l5,-80 l-85,0 z"
+print(bnum)
 
-path = dwg.path(pathstr,fill="red")
-
-
-pathstr2 = "M120,100 l80,0 l5,-80 l-85,0 z"
-
-path2 = dwg.path(pathstr2,fill="blue")
-path2.scale(2,2)
-
-dwg.add(path)
-dwg.add(path2)
-
-
-display(SVG(dwg.tostring()))
+dx = 0
+for c in bnum:
+    dx += 10
+    dwg.add(dwg.text(c,dx,0))
+    
+    
+dwg.save()

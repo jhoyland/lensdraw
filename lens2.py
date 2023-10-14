@@ -19,6 +19,8 @@ project.setOutputPlane(100,relativeTo='image')
 project.addChiefRays(h=1,method="object",group=1,rays=17)
 project.addChiefRays(h=-1,method="object",group=2,rays=17)
 
+
+
 project.traceAll()
 
 drawing = lensdraw.lensrender(name = "lens2.svg", project = project, size=(800,600))

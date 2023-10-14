@@ -1,0 +1,28 @@
+---
+optics:
+  - name: objective
+    type: lens
+    form: plano
+    f: 18
+    x: 0
+    d: 25.4
+  - name: eyepiece
+    type: lens
+    form: plano
+    f: 35
+    x: 143
+    d: 25.4
+    afterElement: objective
+  - name: camera
+    type: lens
+    form: bi
+    f: 2.917
+    x: 10
+    d: 10
+    afterElement: eyepiece
+  - name: sensor
+    type: aperture
+    x: 2.917
+    d: 3.674
+    afterElement: camera
+...

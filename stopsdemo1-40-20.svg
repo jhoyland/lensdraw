@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="600"
+   version="1.1"
+   width="800"
+   id="svg6885"
+   sodipodi:docname="stopsdemo1-40-20.svg"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview6887"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.2783333"
+     inkscape:cx="399.73924"
+     inkscape:cy="300.39113"
+     inkscape:window-width="1920"
+     inkscape:window-height="1013"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g6883" />
+  <defs
+     id="defs6809" />
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="axis"
+     id="g6813">
+    <line
+       fill="none"
+       stroke="#040404"
+       stroke-dasharray="10,4"
+       stroke-width="2.0"
+       x1="0"
+       x2="800"
+       y1="300.0"
+       y2="300.0"
+       id="line6811" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="optics"
+     id="g6817">
+    <path
+       d="M 228.57142857142858,300.0 m -5.0,-72.0 a 727.9999999999998,727.9999999999998 0 0 0    0,144.0 h   10 a 727.9999999999998,727.9999999999998 0 0 0    0,-144.0 z"
+       fill="#CCCCCC"
+       id="objective"
+       stroke="#000000"
+       stroke-dasharray="100,0"
+       stroke-width="1.0" />
+    <path
+       d="M 514.2857142857143,300.0 m -5.0,-36.0 a 676.0,676.0 0 0 0    0,72.0 h   10 a 676.0,676.0 0 0 0    0,-72.0 z"
+       fill="#CCCCCC"
+       id="eyepiece"
+       stroke="#000000"
+       stroke-dasharray="100,0"
+       stroke-width="1.0" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="stops"
+     id="g6823">
+    <path
+       d="M 514.2857142857143,300.0 m -5.0,36.0 h   10 m    0,-72.0 h  -10 m  5.0,   0 v -144.0 m    0,216.0 v 144.0 "
+       fill="none"
+       id="path6819"
+       stroke="#FF0000"
+       stroke-dasharray="100,0"
+       stroke-width="2" />
+    <path
+       d="M 228.57142857142858,300.0 m -5.0,72.0 h   10 m    0,-144.0 h  -10 m  5.0,   0 v -108.0 m    0,252.0 v 108.0 "
+       fill="none"
+       id="path6821"
+       stroke="#00FF00"
+       stroke-dasharray="100,0"
+       stroke-width="2" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="pupils"
+     id="g6827"
+     style="display:none">
+    <path
+       d="m 117.46032,300 m -5,14 h 10 m 0,-28 h -10 m 5,0 V 120 m 0,194 v 166"
+       fill="none"
+       id="__entrance_pupil__"
+       stroke="#ff2020"
+       stroke-dasharray="100, 0"
+       stroke-width="1.5" />
+    <path
+       d="m 514.28571,300 m -5,36 h 10 m 0,-72 h -10 m 5,0 V 120 m 0,216 v 144"
+       fill="none"
+       id="__exit_pupil__"
+       stroke="#ff1010"
+       stroke-dasharray="100, 0"
+       stroke-width="1.5" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="windows"
+     id="g6831"
+     style="display:none">
+    <path
+       d="m 228.57143,300 m -5,72 h 10 m 0,-144 h -10 m 5,0 V 120 m 0,252 v 108"
+       fill="none"
+       id="__entrance_window__"
+       stroke="#20ff20"
+       stroke-dasharray="100, 0"
+       stroke-width="1.5" />
+    <path
+       d="m 614.67181,300 m -5,25.2973 h 10 m 0,-50.5946 h -10 m 5,0 V 120 m 0,205.2973 V 480"
+       fill="none"
+       id="__exit_window__"
+       stroke="#10ff10"
+       stroke-dasharray="100, 0"
+       stroke-width="1.5" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="objects"
+     id="g6835">
+    <path
+       d="M 68.57142857142858,300.0 m    0,45.0 v -90.0 l   -3, 7.0 l    6,   0 l   -3,-7.0 "
+       fill="#000000"
+       stroke="#000000"
+       stroke-dasharray="100,0"
+       stroke-width="1.0"
+       id="path6833" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="images"
+     id="g6839">
+    <path
+       d="M 695.8730158730159,300.0 m    0,65.00000000000009 v -130.00000000000017 l   -3, 7.0 l    6,   0 l   -3,-7.0 "
+       fill="#020202"
+       stroke="#020202"
+       stroke-dasharray="100,0"
+       stroke-width="1.0"
+       id="path6837" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="rayGroup1"
+     id="g6857">
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="68.57142857142858"
+       x2="228.57142857142858"
+       y1="300.0"
+       y2="345.77236363636365"
+       id="line6841" />
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="228.57142857142858"
+       x2="514.2857142857143"
+       y1="345.77236363636365"
+       y2="264.036"
+       id="line6843" />
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="264.036"
+       y2="300.0"
+       id="line6845" />
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="1,1"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="264.036"
+       y2="300.0"
+       id="line6847" />
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="68.57142857142858"
+       x2="228.57142857142858"
+       y1="300.0"
+       y2="254.22763636363635"
+       id="line6849" />
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="228.57142857142858"
+       x2="514.2857142857143"
+       y1="254.22763636363635"
+       y2="335.964"
+       id="line6851" />
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="335.964"
+       y2="300.0"
+       id="line6853" />
+    <line
+       fill="none"
+       stroke="#E00000"
+       stroke-dasharray="1,1"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="335.964"
+       y2="300.0"
+       id="line6855" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="rayGroup2"
+     id="g6875">
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="68.57142857142858"
+       x2="228.57142857142858"
+       y1="331.3632"
+       y2="228.71999999999997"
+       id="line6859" />
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="228.57142857142858"
+       x2="514.2857142857143"
+       y1="228.71999999999997"
+       y2="300.00000000000006"
+       id="line6861" />
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="300.00000000000006"
+       y2="345.3024"
+       id="line6863" />
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="1,1"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="300.00000000000006"
+       y2="345.3024"
+       id="line6865" />
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="68.57142857142858"
+       x2="228.57142857142858"
+       y1="268.6368"
+       y2="371.28000000000003"
+       id="line6867" />
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="228.57142857142858"
+       x2="514.2857142857143"
+       y1="371.28000000000003"
+       y2="299.99999999999994"
+       id="line6869" />
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="100,0"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="299.99999999999994"
+       y2="254.69760000000002"
+       id="line6871" />
+    <line
+       fill="none"
+       stroke="#29ab93"
+       stroke-dasharray="1,1"
+       stroke-width="0.5"
+       x1="514.2857142857143"
+       x2="695.8730158730159"
+       y1="299.99999999999994"
+       y2="254.69760000000002"
+       id="line6873" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="rayGroup3"
+     id="g6883"
+     style="display:none">
+    <line
+       fill="none"
+       stroke="#0000ff"
+       stroke-dasharray="100, 0"
+       stroke-width="0.5"
+       x1="68.571426"
+       x2="228.57143"
+       y1="300"
+       y2="251.616"
+       id="line6877" />
+    <line
+       fill="none"
+       stroke="#0000ff"
+       stroke-dasharray="100, 0"
+       stroke-width="0.5"
+       x1="228.57143"
+       x2="514.28571"
+       y1="251.616"
+       y2="338.01599"
+       id="line6879" />
+    <line
+       fill="none"
+       stroke="#0000ff"
+       stroke-dasharray="1, 1"
+       stroke-width="0.5"
+       x1="514.28571"
+       x2="695.87299"
+       y1="338.01599"
+       y2="300"
+       id="line6881" />
+  </g>
+</svg>
